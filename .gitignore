@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+build/
+dist/
+*.log
+.gemini/
+pass.txt
+hrms-app (1).jsx
