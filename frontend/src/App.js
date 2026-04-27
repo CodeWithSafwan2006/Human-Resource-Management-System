@@ -238,10 +238,7 @@ Guidelines:
 
       const response = await fetch(`${baseUrl}/api/ai/chat`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('hrms_token')}`
-        },
+        headers: { "Content-Type": "application/json" },
        body: JSON.stringify({
         systemPrompt: systemPrompt,
         messages: [...messages, userMsg].map(m=>({role:m.role, content:m.content}))
