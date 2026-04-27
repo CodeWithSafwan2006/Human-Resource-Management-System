@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const baseUrl = process.env.REACT_APP_API_URL || 'https://human-resource-management-system-1rfq.onrender.com';
 
@@ -1167,7 +1167,7 @@ export default function HRMSApp() {
     );
   }
 
-  const rc = roleColor[currentUser.role];
+
 
   return (
     <div style={{minHeight:'100vh',background:'linear-gradient(180deg,#f8faff 0%,#f3f6fb 100%)',fontFamily:'Inter,system-ui,-apple-system,sans-serif',display:'flex',flexDirection:'column'}}>
