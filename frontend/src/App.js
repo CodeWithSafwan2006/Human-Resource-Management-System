@@ -1122,8 +1122,8 @@ export default function HRMSApp() {
     else setLoginError('Invalid email or password. Please try again.');
   };
 
-  const roleColor = {employee:'#4f46e5',hr:'#0891b2',finance:'#10b981'};
-  const roleLabel = {employee:'Employee Portal',hr:'HR Management',finance:'Finance & Payroll'};
+
+
 
   if (!currentUser) {
     return (
