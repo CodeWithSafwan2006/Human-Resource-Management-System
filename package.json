@@ -1,0 +1,12 @@
+{
+  "name": "hrms-saas",
+  "version": "1.0.0",
+  "description": "Human Resource Management System SaaS",
+  "scripts": {
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "start": "cd backend && npm start",
+    "build-frontend": "cd frontend && npm install && npm run build"
+  },
+  "author": "Safwan",
+  "license": "ISC"
+}
