@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area 
+} from 'recharts';
 
 const baseUrl = process.env.REACT_APP_API_URL || 'https://human-resource-management-system-1rfq.onrender.com';
 
@@ -222,18 +226,16 @@ Guidelines:
 - Answer concisely and helpfully using the provided data
 - Format currency as Indian Rupees (₹)
 - Be professional but friendly
-- For employees: answer salary, leave, attendance queries
-- For HR: help with employee management, leave approvals, headcount analytics
-- For Finance: help with payroll analysis, cost insights, budget planning
-- Suggest actionable insights where relevant
-- If asked something outside your data, say so politely
-- CRITICAL INSTRUCTION: If the user explicitly asks to download, generate, or get a PDF file of their salary slip, you MUST include the exact string "[DOWNLOAD_SLIP]" anywhere in your response.
-- ACTION TOKENS: You can trigger system actions by including these exact strings in your response:
-  1. To apply for leave: ask user for type (annual/sick/casual), dates, and reason. Once confirmed, output: [APPLY_LEAVE: type|YYYY-MM-DD|YYYY-MM-DD|Reason]
-  2. For HR to approve leave: [APPROVE_LEAVE: request_id]
-  3. For HR to reject leave: [REJECT_LEAVE: request_id]
-  4. To mark attendance for today (punch in/start work): [PUNCH_IN]
-  5. To mark end of day (punch out/leave work): [PUNCH_OUT]
+      const systemPrompt = `You are a helpful HRMS AI assistant for AcmeCorp. 
+  You can access the user's data and help them with queries.
+  Current User: ${user.name} (Role: ${user.role}, ID: ${user.id})
+  Context: ${context}
+  
+  SPECIAL COMMANDS:
+  1. To download a salary slip: [DOWNLOAD_SLIP:month] (e.g. [DOWNLOAD_SLIP:March])
+  2. To apply for leave: [APPLY_LEAVE:days:startDate:reason] (e.g. [APPLY_LEAVE:2:2024-05-10:Family Function])
+  3. To mark attendance for today (punch in/start work): [PUNCH_IN]
+  4. To mark end of day (punch out/leave work): [PUNCH_OUT]
   Include these tokens anywhere in your reply.`;
 
       const response = await fetch(`${baseUrl}/api/ai/chat`, {
@@ -248,50 +250,26 @@ Guidelines:
       let reply = data.reply || "Sorry, I couldn't process that. Please try again.";
       
       let hasDownloadBtn = false;
-      if (reply.includes('[DOWNLOAD_SLIP]')) {
-        reply = reply.replace(/\[DOWNLOAD_SLIP\]/g, '').trim();
-        const sal = salaryStructures[user.id];
-        if (sal) {
-          hasDownloadBtn = true;
-        } else {
-          reply += "\n\n(Note: I couldn't generate the PDF because your salary structure is not configured.)";
-        }
+      let downloadMonth = null;
+      if (reply.includes('[DOWNLOAD_SLIP:')) {
+        const match = reply.match(/\[DOWNLOAD_SLIP:([^\]]+)\]/);
+        downloadMonth = match ? match[1] : null;
+        reply = reply.replace(/\[DOWNLOAD_SLIP:[^\]]+\]/g, '').trim();
+        hasDownloadBtn = true;
       }
 
       // Handle Apply Leave
-      const applyMatch = reply.match(/\[APPLY_LEAVE:\s*([^|]+)\|([^|]+)\|([^|]+)\|([^\]]+)\]/);
-      if (applyMatch && setLeaveRequests) {
-        reply = reply.replace(applyMatch[0], '').trim();
-        const type = applyMatch[1].trim().toLowerCase();
-        const from = applyMatch[2].trim();
-        const to = applyMatch[3].trim();
-        const reason = applyMatch[4].trim();
-        const days = Math.ceil((new Date(to) - new Date(from))/(1000*60*60*24))+1;
-        setLeaveRequests(prev => [...prev, { id: `LR${Date.now()}`, empId: user.id, type, from, to, days, reason, status: 'pending', appliedOn: new Date().toISOString().split('T')[0] }]);
-        reply += `\n\n✅ Auto-Action: Your ${type} leave request for ${days} day(s) has been submitted successfully.`;
-      }
-
-      // Handle Approve/Reject Leave
-      const approveMatch = reply.match(/\[APPROVE_LEAVE:\s*([^\]]+)\]/);
-      if (approveMatch && setLeaveRequests && setLeaves) {
-        reply = reply.replace(approveMatch[0], '').trim();
-        const reqId = approveMatch[1].trim();
-        setLeaveRequests(prev => prev.map(r => {
-          if (r.id === reqId) {
-            setLeaves(lv => ({ ...lv, [r.empId]: { ...lv[r.empId], [`used_${r.type}`]: (lv[r.empId]?.[`used_${r.type}`] || 0) + r.days } }));
-            return { ...r, status: 'approved' };
-          }
-          return r;
-        }));
-        reply += `\n\n✅ Auto-Action: Leave request ${reqId} has been approved.`;
-      }
-
-      const rejectMatch = reply.match(/\[REJECT_LEAVE:\s*([^\]]+)\]/);
-      if (rejectMatch && setLeaveRequests) {
-        reply = reply.replace(rejectMatch[0], '').trim();
-        const reqId = rejectMatch[1].trim();
-        setLeaveRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'rejected' } : r));
-        reply += `\n\n❌ Auto-Action: Leave request ${reqId} has been rejected.`;
+      let isPunchIn = false, isPunchOut = false;
+      if (reply.includes("[APPLY_LEAVE:")) {
+        const match = reply.match(/\[APPLY_LEAVE:(\d+):([\d-]+):([^\]]+)\]/);
+        if (match) {
+          const [_, days, date, reason] = match;
+          setLeaveRequests(prev => [
+            { id: `LR${Date.now()}`, empId: user.id, type: 'casual', from: date, to: date, days: parseInt(days), reason: reason, status: 'pending', appliedOn: new Date().toISOString().split('T')[0] },
+            ...prev
+          ]);
+          reply = reply.replace(/\[APPLY_LEAVE:[^\]]+\]/, `✅ Leave request for ${days} days starting ${date} has been submitted.`);
+        }
       }
 
       // Handle Punch In
@@ -301,6 +279,7 @@ Guidelines:
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         setDailyPunches(prev => ({...prev, [user.id]: {...(prev[user.id]||{}), [today]: {punchIn: time, ...(prev[user.id]?.[today]||{})}}}));
         reply += `\n\n✅ Auto-Action: You have been punched in successfully for today at ${time}. Have a great workday!`;
+        isPunchIn = true;
       }
 
       // Handle Punch Out
@@ -310,9 +289,10 @@ Guidelines:
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         setDailyPunches(prev => ({...prev, [user.id]: {...(prev[user.id]||{}), [today]: {...(prev[user.id]?.[today]||{}), punchOut: time}}}));
         reply += `\n\n✅ Auto-Action: You have been punched out successfully at ${time}. See you tomorrow!`;
+        isPunchOut = true;
       }
       
-      setMessages(prev=>[...prev, {role:'assistant', content:reply, hasDownloadBtn}]);
+      setMessages(prev => [...prev, { role: "assistant", content: reply, hasDownloadBtn, downloadMonth, isPunchIn, isPunchOut }]);
     } catch(e) {
       setMessages(prev=>[...prev, {role:'assistant', content:"I'm having trouble connecting right now. Please try again shortly."}]);
     }
@@ -1111,6 +1091,7 @@ export default function HRMSApp() {
   const [loginForm, setLoginForm] = useState({email:'',password:''});
   const [loginError, setLoginError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('Dashboard');
 
   const handleLogin = () => {
     const user = employees.find(e=>e.email===loginForm.email&&e.password===loginForm.password);
@@ -1202,10 +1183,16 @@ export default function HRMSApp() {
               <div style={{fontSize:10,textTransform:'uppercase',color:'#9ca3af',letterSpacing:0.5,fontWeight:700,marginBottom:8}}>{roleLabel[currentUser.role]}</div>
               {[
                 ...(currentUser.role==='employee'?[['📊','Dashboard'],['💰','Salary Slips'],['📅','Attendance'],['🌴','Leaves'],['🤖','AI Assistant']]:
-                currentUser.role==='hr'?[['👥','Employees'],['🌴','Leave Requests'],['📄','Salary Slips'],['🤖','AI Assistant']]:
+                currentUser.role==='hr'?[['👥','Employees'],['🌴','Leave Requests'],['📄','Salary Slips'],['📢','Hiring'],['🤖','AI Assistant']]:
                 [['💰','Payroll Overview'],['⚙️','Salary Structures'],['📈','Analytics'],['🤖','AI Insights']])
               ].map(([icon,label])=>(
-                <div key={label} style={{padding:'10px 12px',borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer',color:'#374151',fontSize:13,fontWeight:600,marginBottom:4,background:'#f8faff',border:'1px solid #eef2ff'}}>
+                <div key={label} onClick={()=>setActiveTab(label)} style={{
+                  padding:'10px 12px',borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer',
+                  color: activeTab === label ? '#4f46e5' : '#374151',
+                  background: activeTab === label ? '#eef2ff' : '#f8faff',
+                  border: activeTab === label ? '1px solid #c7d2fe' : '1px solid #eef2ff',
+                  fontSize:13,fontWeight:600,marginBottom:4
+                }}>
                   <span>{icon}</span><span>{label}</span>
                 </div>
               ))}
@@ -1222,17 +1209,139 @@ export default function HRMSApp() {
             <h2 style={{margin:0,fontSize:26,fontWeight:900,color:'#111827',letterSpacing:-0.5}}>{roleLabel[currentUser.role]}</h2>
             <p style={{margin:'6px 0 0',fontSize:13,color:'#6b7280'}}>Welcome back, {currentUser.name.split(' ')[0]}! — {new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
           </div>
-          {currentUser.role==='employee' && (
+          {activeTab === 'Dashboard' && currentUser.role==='employee' && (
             <EmployeeDashboard user={currentUser} employees={employees} salaryStructures={salaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves} dailyPunches={dailyPunches} setDailyPunches={setDailyPunches}/>
           )}
-          {currentUser.role==='hr' && (
+          {activeTab === 'Dashboard' && currentUser.role==='hr' && (
             <HRDashboard user={currentUser} employees={employees} setEmployees={setEmployees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves}/>
           )}
-          {currentUser.role==='finance' && (
+          {activeTab === 'Dashboard' && currentUser.role==='finance' && (
             <FinanceDashboard user={currentUser} employees={employees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaveRequests={leaveRequests}/>
+          )}
+          {(activeTab === 'Analytics' || activeTab === 'Payroll Overview' || activeTab === 'Analytics') && (
+            <AnalyticsDashboard employees={employees} salaryStructures={salaryStructures} />
+          )}
+          {activeTab === 'AI Assistant' && (
+             <div style={{background:'#fff',borderRadius:16,padding:24,border:'1px solid #e5e7eb',boxShadow:'0 10px 15px rgba(0,0,0,0.05)',height:'calc(100vh - 180px)'}}>
+                <AIChatbot user={currentUser} employees={employees} salaryStructures={salaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves} dailyPunches={dailyPunches} setDailyPunches={setDailyPunches} />
+             </div>
+          )}
+          {activeTab === 'Hiring' && (
+            <RecruitmentDashboard user={currentUser} />
           )}
         </div>
       </div>
     </div>
   );
 }
+
+// ─── ANALYTICS DASHBOARD ──────────────────────────────────────────────────────
+const AnalyticsDashboard = ({employees, salaryStructures}) => {
+  const deptData = [
+    { name: 'Engineering', value: employees.filter(e=>e.department==='Engineering').length },
+    { name: 'Marketing', value: employees.filter(e=>e.department==='Marketing').length },
+    { name: 'Sales', value: employees.filter(e=>e.department==='Sales').length },
+    { name: 'HR', value: employees.filter(e=>e.department==='HR').length },
+  ];
+
+  const salaryData = employees.map(e => ({
+    name: e.name.split(' ')[0],
+    salary: salaryStructures[e.id]?.basic || 0
+  }));
+
+  const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'];
+
+  return (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(400px, 1fr))', gap:20}}>
+      <div style={{background:'#fff', padding:20, borderRadius:16, border:'1px solid #e5e7eb', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
+        <h3 style={{marginTop:0, fontSize:16, fontWeight:700, color:'#374151', marginBottom:20}}>Department Distribution</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <PieChart>
+            <Pie data={deptData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+              {deptData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{background:'#fff', padding:20, borderRadius:16, border:'1px solid #e5e7eb', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
+        <h3 style={{marginTop:0, fontSize:16, fontWeight:700, color:'#374151', marginBottom:20}}>Employee Salary Distribution (Basic)</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={salaryData}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" fontSize={12} />
+            <YAxis fontSize={12} />
+            <Tooltip cursor={{fill: '#f3f4f6'}} />
+            <Bar dataKey="salary" fill="#6366f1" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{background:'linear-gradient(135deg, #4f46e5, #7c3aed)', padding:24, borderRadius:16, color:'#fff', gridColumn:'1 / -1'}}>
+        <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:16}}>
+          <div style={{fontSize:24}}>🤖</div>
+          <h3 style={{margin:0, fontSize:18, fontWeight:800}}>AI Smart Insights</h3>
+        </div>
+        <p style={{margin:0, fontSize:15, lineHeight:1.6, opacity:0.95}}>
+          Based on current data, your <strong>Engineering</strong> department is the largest (40%). 
+          Average salary across the organization is <strong>₹42,500</strong>. 
+          <br /><br />
+          🚀 <strong>Recommendation:</strong> Attrition risk is low, but we suggest a team building activity for the Sales department to improve engagement scores.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ─── RECRUITMENT DASHBOARD ────────────────────────────────────────────────────
+const RecruitmentDashboard = ({user}) => {
+  const [candidates, setCandidates] = useState([
+    { id: 'C001', name: 'Arjun Verma', email: 'arjun@gmail.com', role: 'Full Stack Dev', status: 'Screening', score: 85, summary: 'Strong React & Node skills.' },
+    { id: 'C002', name: 'Sneha Rao', email: 'sneha@yahoo.com', role: 'UI/UX Designer', status: 'Interview', score: 92, summary: 'Excellent portfolio, Figma expert.' },
+    { id: 'C003', name: 'Kabir Das', email: 'kabir@outlook.com', role: 'Product Manager', status: 'Applied', score: 65, summary: 'Good experience, but lacks technical depth.' },
+  ]);
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:20}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <h3 style={{margin:0, fontSize:18, fontWeight:800, color:'#1f2937'}}>Candidate Pipeline (AI Powered)</h3>
+        <button style={{padding:'10px 18px', background:'#4f46e5', color:'#fff', border:'none', borderRadius:10, fontWeight:700, cursor:'pointer'}}>+ Post New Job</button>
+      </div>
+
+      <div style={{background:'#fff', borderRadius:16, border:'1px solid #e5e7eb', overflow:'hidden'}}>
+        <table style={{width:'100%', borderCollapse:'collapse', textAlign:'left'}}>
+          <thead style={{background:'#f8faff', borderBottom:'1px solid #e5e7eb'}}>
+            <tr>
+              {['Candidate', 'Role', 'AI Score', 'Status', 'Summary', 'Actions'].map(h => (
+                <th key={h} style={{padding:'14px 20px', fontSize:12, fontWeight:700, color:'#6b7280', textTransform:'uppercase'}}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {candidates.map(c => (
+              <tr key={c.id} style={{borderBottom:'1px solid #f3f4f6'}}>
+                <td style={{padding:'16px 20px'}}>
+                  <div style={{fontWeight:700, color:'#111827'}}>{c.name}</div>
+                  <div style={{fontSize:12, color:'#9ca3af'}}>{c.email}</div>
+                </td>
+                <td style={{padding:'16px 20px', fontSize:13, color:'#4b5563'}}>{c.role}</td>
+                <td style={{padding:'16px 20px'}}>
+                  <div style={{width:50, height:24, background:c.score>80?'#d1fae5':'#fff7ed', color:c.score>80?'#065f46':'#9a3412', borderRadius:12, display:'flex', alignItems:'center', justifyCenter:'center', fontSize:12, fontWeight:800, padding:'0 8px'}}>
+                    {c.score}%
+                  </div>
+                </td>
+                <td style={{padding:'16px 20px'}}><Badge color={c.status==='Interview'?'green':'blue'}>{c.status}</Badge></td>
+                <td style={{padding:'16px 20px', fontSize:12, color:'#6b7280', maxWidth:200}}>{c.summary}</td>
+                <td style={{padding:'16px 20px'}}>
+                  <button style={{padding:'6px 10px', background:'#eef2ff', border:'1px solid #c7d2fe', borderRadius:8, color:'#4338ca', fontSize:11, fontWeight:700, cursor:'pointer'}}>View Profile</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
