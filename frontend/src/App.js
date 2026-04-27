@@ -685,22 +685,41 @@ const HRDashboard = ({user,employees,setEmployees,salaryStructures,setSalaryStru
   const openAdd = () => { setEmpForm({name:'',email:'',department:'Engineering',designation:'',phone:'',joinDate:new Date().toISOString().split('T')[0],password:'pass123'}); setEditEmp(null); setShowAddModal(true); };
   const openEdit = (e) => { setEmpForm({...e}); setEditEmp(e); setShowAddModal(true); };
 
-  const saveEmployee = () => {
+  const saveEmployee = async () => {
     if (!empForm.name||!empForm.email||!empForm.department) return;
-    if (editEmp) {
-      setEmployees(prev=>prev.map(e=>e.id===editEmp.id?{...e,...empForm}:e));
-    } else {
-      const newId = `E${String(employees.length+1).padStart(3,'0')}`;
-      const newEmp = {...empForm,id:newId,role:'employee',managerId:user.id};
-      setEmployees(prev=>[...prev,newEmp]);
-      setLeaves(prev=>({...prev,[newId]:{annual:15,sick:10,casual:7,used_annual:0,used_sick:0,used_casual:0}}));
+    try {
+      if (editEmp) {
+        const res = await fetch(`${baseUrl}/api/employees/${editEmp.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(empForm)
+        });
+        const updated = await res.json();
+        setEmployees(prev => prev.map(e => e.id === editEmp.id ? updated : e));
+      } else {
+        const res = await fetch(`${baseUrl}/api/employees`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...empForm, role: 'employee' })
+        });
+        const data = await res.json();
+        setEmployees(prev => [...prev, { ...empForm, id: data.empId }]);
+      }
+      setShowAddModal(false);
+    } catch (err) {
+      console.error("Error saving employee:", err);
+      alert("Failed to save to database.");
     }
-    setShowAddModal(false);
   };
 
-  const deleteEmployee = (id) => {
+  const deleteEmployee = async (id) => {
     if(!window.confirm('Delete this employee?')) return;
-    setEmployees(prev=>prev.filter(e=>e.id!==id));
+    try {
+      await fetch(`${baseUrl}/api/employees/${id}`, { method: 'DELETE' });
+      setEmployees(prev => prev.filter(e => e.id !== id));
+    } catch (err) {
+      console.error("Error deleting employee:", err);
+    }
   };
 
   const handleLeave = (id, action) => {
@@ -1074,7 +1093,16 @@ const FinanceDashboard = ({user,employees,salaryStructures,setSalaryStructures,a
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function HRMSApp() {
-  const [employees, setEmployees] = useState(INITIAL_EMPLOYEES);
+  const [employees, setEmployees] = useState([]);
+  
+  useEffect(() => {
+    fetch(`${baseUrl}/api/employees`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setEmployees(data);
+      })
+      .catch(err => console.error("Error fetching employees:", err));
+  }, []);
   const [salaryStructures, setSalaryStructures] = useState(INITIAL_SALARY_STRUCTURES);
   const [attendance] = useState(INITIAL_ATTENDANCE);
   const [leaves, setLeaves] = useState(INITIAL_LEAVES);
