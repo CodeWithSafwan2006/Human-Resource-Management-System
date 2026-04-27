@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const baseUrl = process.env.REACT_APP_API_URL || 'https://human-resource-management-system-1rfq.onrender.com';
 
 // ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
 const INITIAL_EMPLOYEES = [
