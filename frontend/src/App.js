@@ -1091,6 +1091,105 @@ const FinanceDashboard = ({user,employees,salaryStructures,setSalaryStructures,a
   );
 };
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+const LandingPage = ({ onLoginClick }) => {
+  return (
+    <div style={{ minHeight: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif', overflowX: 'hidden' }}>
+      <style>{`
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0px); } }
+        .feature-card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.1) !important; border-color: rgba(99,102,241,0.5) !important; }
+      `}</style>
+      
+      {/* Navigation */}
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 5%', position: 'absolute', width: '100%', boxSizing: 'border-box', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, boxShadow: '0 10px 20px rgba(79,70,229,0.3)' }}>🏢</div>
+          <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: -0.5 }}>AcmeCorp <span style={{ color: '#818cf8' }}>HRMS</span></span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+          <a href="#features" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 15, fontWeight: 500 }}>Features</a>
+          <a href="#about" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: 15, fontWeight: 500 }}>About</a>
+          <button onClick={onLoginClick} style={{ padding: '10px 24px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>Login</button>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <header style={{ height: '100vh', display: 'flex', alignItems: 'center', padding: '0 5%', background: 'radial-gradient(circle at 80% 20%, rgba(79,70,229,0.15) 0%, transparent 40%), radial-gradient(circle at 10% 80%, rgba(124,58,237,0.1) 0%, transparent 40%)' }}>
+        <div style={{ maxWidth: 800, animation: 'fadeIn 1s ease-out' }}>
+          <Badge color="purple" style={{ marginBottom: 20, padding: '6px 16px', fontSize: 12 }}>✨ The Future of HR is Here</Badge>
+          <h1 style={{ fontSize: 'clamp(40px, 8vw, 72px)', fontWeight: 900, lineHeight: 1.1, margin: '0 0 24px', letterSpacing: -2 }}>
+            Manage Your <span style={{ background: 'linear-gradient(135deg, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Workforce</span> with Intelligence.
+          </h1>
+          <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 40, maxWidth: 600 }}>
+            Automate payroll, track attendance, and manage leaves with our AI-powered HRMS. Designed for modern teams who value efficiency and growth.
+          </p>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <Btn onClick={onLoginClick} size="lg" style={{ padding: '16px 36px', fontSize: 16 }}>Get Started Free →</Btn>
+            <button style={{ padding: '16px 36px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>View Demo</button>
+          </div>
+          
+          <div style={{ marginTop: 60, display: 'flex', gap: 40, alignItems: 'center', opacity: 0.5 }}>
+            <span style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Trusted by</span>
+            <div style={{ display: 'flex', gap: 24, fontSize: 18, fontWeight: 800 }}>
+              <span>ACME</span><span>GLOBEX</span><span>SOYLENT</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Features Section */}
+      <section id="features" style={{ padding: '100px 5%', background: '#0a0f1d' }}>
+        <div style={{ textAlign: 'center', marginBottom: 80 }}>
+          <h2 style={{ fontSize: 40, fontWeight: 800, marginBottom: 16 }}>Everything you need to <span style={{ color: '#818cf8' }}>scale</span></h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 600, margin: '0 auto' }}>Powering your HR department with tools that work as hard as you do.</p>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 30 }}>
+          {[
+            { icon: '💰', title: 'Automated Payroll', desc: 'Generate salary slips, manage deductions, and handle bonuses with one click.' },
+            { icon: '🤖', title: 'AI HR Assistant', desc: 'Chat with our AI to get instant insights into payroll, leaves, and performance.' },
+            { icon: '🌴', title: 'Leave Management', desc: 'Streamlined leave requests and approvals with real-time balance tracking.' },
+            { icon: '📈', title: 'Smart Analytics', desc: 'Visualize department costs, headcounts, and growth trends with ease.' }
+          ].map((f, i) => (
+            <div key={i} className="feature-card" style={{ padding: 40, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, transition: 'all 0.3s' }}>
+              <div style={{ fontSize: 40, marginBottom: 24 }}>{f.icon}</div>
+              <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>{f.title}</h3>
+              <p style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, fontSize: 15 }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Social Proof / Stats */}
+      <section style={{ padding: '100px 5%', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, textAlign: 'center' }}>
+          {[
+            { val: '99%', label: 'Accuracy' },
+            { val: '50k+', label: 'Employees Managed' },
+            { val: '24/7', label: 'AI Support' },
+            { val: '10x', label: 'Faster Processing' }
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 48, fontWeight: 900, color: '#818cf8', marginBottom: 8 }}>{s.val}</div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ padding: '60px 5%', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+        <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <div style={{ width: 30, height: 30, background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🏢</div>
+          <span style={{ fontWeight: 800 }}>AcmeCorp HRMS</span>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>© 2026 AcmeCorp Industries. All rights reserved. Built for excellence.</p>
+      </footer>
+    </div>
+  );
+};
+
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function HRMSApp() {
   const [employees, setEmployees] = useState([]);
@@ -1116,16 +1215,35 @@ export default function HRMSApp() {
     const saved = localStorage.getItem('hrms_user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [showLogin, setShowLogin] = useState(false);
   const [loginForm, setLoginForm] = useState({email:'',password:''});
   const [loginError, setLoginError] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('hrms_active_tab') || 'Dashboard');
+  useEffect(() => { localStorage.setItem('hrms_active_tab', activeTab); }, [activeTab]);
+
+  const handleSidebarClick = (label) => {
+    setActiveTab(label);
+    if (currentUser.role === 'employee') {
+      const mapping = { 'Dashboard': 'overview', 'Salary Slips': 'salary', 'Attendance': 'attendance', 'Leaves': 'leaves', 'AI Assistant': 'ai' };
+      if (mapping[label]) localStorage.setItem('hrms_tab_emp', mapping[label]);
+    } else if (currentUser.role === 'hr') {
+      const mapping = { 'Employees': 'employees', 'Leave Requests': 'leaves', 'Salary Slips': 'slips', 'AI Assistant': 'ai' };
+      if (mapping[label]) localStorage.setItem('hrms_tab_hr', mapping[label]);
+    } else if (currentUser.role === 'finance') {
+      const mapping = { 'Payroll Overview': 'payroll', 'Salary Structures': 'salary', 'Analytics': 'analytics', 'AI Insights': 'ai' };
+      if (mapping[label]) localStorage.setItem('hrms_tab_fin', mapping[label]);
+    }
+  };
 
   const handleLogin = () => {
     const user = employees.find(e=>e.email===loginForm.email&&e.password===loginForm.password);
     if (user) { 
       setCurrentUser(user); 
       localStorage.setItem('hrms_user', JSON.stringify(user));
+      // Set initial tab based on role
+      const initialTab = user.role === 'employee' ? 'Dashboard' : user.role === 'hr' ? 'Employees' : 'Payroll Overview';
+      setActiveTab(initialTab);
       setLoginError(''); 
     }
     else setLoginError('Invalid email or password. Please try again.');
@@ -1135,10 +1253,14 @@ export default function HRMSApp() {
 
 
   if (!currentUser) {
+    if (!showLogin) {
+      return <LandingPage onLoginClick={() => setShowLogin(true)} />;
+    }
     return (
       <div style={{minHeight:'100vh',background:'radial-gradient(circle at 20% 10%, #6366f1 0%, #312e81 35%, #0f172a 100%)',display:'flex',alignItems:'center',justifyContent:'center',padding:24,fontFamily:'Inter,system-ui,sans-serif'}}>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
         <div style={{width:'100%',maxWidth:460}}>
+          <button onClick={() => setShowLogin(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>← Back to Home</button>
           <div style={{textAlign:'center',marginBottom:32}}>
             <div style={{width:68,height:68,background:'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.08))',borderRadius:20,margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,boxShadow:'0 10px 28px rgba(30,41,59,0.35)'}}>🏢</div>
             <h1 style={{color:'#fff',fontSize:30,fontWeight:900,margin:0,letterSpacing:-0.4}}>AcmeCorp HRMS</h1>
@@ -1195,7 +1317,7 @@ export default function HRMSApp() {
           <Badge color={currentUser.role==='employee'?'purple':currentUser.role==='hr'?'blue':'green'} style={{textTransform:'capitalize'}}>{currentUser.role}</Badge>
           <Avatar name={currentUser.name} size={36}/>
           <div style={{display:'none'}}><div style={{fontWeight:600,fontSize:14,color:'#1f2937'}}>{currentUser.name}</div></div>
-          <button onClick={()=>{setCurrentUser(null); localStorage.removeItem('hrms_user');}} style={{padding:'7px 12px',background:'#fee2e2',color:'#991b1b',border:'1px solid #fca5a5',borderRadius:10,cursor:'pointer',fontSize:12,fontWeight:700}}>Sign Out</button>
+          <button onClick={()=>{setCurrentUser(null); localStorage.removeItem('hrms_user'); localStorage.removeItem('hrms_active_tab');}} style={{padding:'7px 12px',background:'#fee2e2',color:'#991b1b',border:'1px solid #fca5a5',borderRadius:10,cursor:'pointer',fontSize:12,fontWeight:700}}>Sign Out</button>
         </div>
       </div>
 
@@ -1214,7 +1336,7 @@ export default function HRMSApp() {
                 currentUser.role==='hr'?[['👥','Employees'],['🌴','Leave Requests'],['📄','Salary Slips'],['📢','Hiring'],['🤖','AI Assistant']]:
                 [['💰','Payroll Overview'],['⚙️','Salary Structures'],['📈','Analytics'],['🤖','AI Insights']])
               ].map(([icon,label])=>(
-                <div key={label} onClick={()=>setActiveTab(label)} style={{
+                <div key={label} onClick={()=>handleSidebarClick(label)} style={{
                   padding:'10px 12px',borderRadius:10,display:'flex',alignItems:'center',gap:8,cursor:'pointer',
                   color: activeTab === label ? '#4f46e5' : '#374151',
                   background: activeTab === label ? '#eef2ff' : '#f8faff',
@@ -1237,24 +1359,22 @@ export default function HRMSApp() {
             <h2 style={{margin:0,fontSize:26,fontWeight:900,color:'#111827',letterSpacing:-0.5}}>{roleLabel[currentUser.role]}</h2>
             <p style={{margin:'6px 0 0',fontSize:13,color:'#6b7280'}}>Welcome back, {currentUser.name.split(' ')[0]}! — {new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
           </div>
-          {activeTab === 'Dashboard' && currentUser.role==='employee' && (
-            <EmployeeDashboard user={currentUser} employees={employees} salaryStructures={salaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves} dailyPunches={dailyPunches} setDailyPunches={setDailyPunches}/>
+          {/* Employee Views */}
+          {['Dashboard', 'Salary Slips', 'Attendance', 'Leaves', 'AI Assistant'].includes(activeTab) && currentUser.role==='employee' && (
+            <EmployeeDashboard key={activeTab} user={currentUser} employees={employees} salaryStructures={salaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves} dailyPunches={dailyPunches} setDailyPunches={setDailyPunches}/>
           )}
-          {activeTab === 'Dashboard' && currentUser.role==='hr' && (
-            <HRDashboard user={currentUser} employees={employees} setEmployees={setEmployees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves}/>
+          
+          {/* HR Views */}
+          {['Employees', 'Leave Requests', 'Salary Slips', 'AI Assistant'].includes(activeTab) && currentUser.role==='hr' && (
+            <HRDashboard key={activeTab} user={currentUser} employees={employees} setEmployees={setEmployees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves}/>
           )}
-          {activeTab === 'Dashboard' && currentUser.role==='finance' && (
-            <FinanceDashboard user={currentUser} employees={employees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaveRequests={leaveRequests}/>
+          
+          {/* Finance Views */}
+          {['Payroll Overview', 'Salary Structures', 'Analytics', 'AI Insights'].includes(activeTab) && currentUser.role==='finance' && (
+            <FinanceDashboard key={activeTab} user={currentUser} employees={employees} salaryStructures={salaryStructures} setSalaryStructures={setSalaryStructures} attendance={attendance} leaveRequests={leaveRequests}/>
           )}
-          {(activeTab === 'Analytics' || activeTab === 'Payroll Overview' || activeTab === 'Analytics') && (
-            <AnalyticsDashboard employees={employees} salaryStructures={salaryStructures} />
-          )}
-          {activeTab === 'AI Assistant' && (
-             <div style={{background:'#fff',borderRadius:16,padding:24,border:'1px solid #e5e7eb',boxShadow:'0 10px 15px rgba(0,0,0,0.05)',height:'calc(100vh - 180px)'}}>
-                <AIChatbot user={currentUser} employees={employees} salaryStructures={salaryStructures} attendance={attendance} leaves={leaves} leaveRequests={leaveRequests} setLeaveRequests={setLeaveRequests} setLeaves={setLeaves} dailyPunches={dailyPunches} setDailyPunches={setDailyPunches} />
-             </div>
-          )}
-          {activeTab === 'Hiring' && (
+
+          {activeTab === 'Hiring' && currentUser.role === 'hr' && (
             <RecruitmentDashboard user={currentUser} />
           )}
         </div>
