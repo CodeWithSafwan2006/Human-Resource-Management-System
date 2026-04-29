@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+// Deployment fix: force build
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area 
