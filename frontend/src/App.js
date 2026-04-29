@@ -1265,7 +1265,7 @@ export default function HRMSApp() {
           <div style={{textAlign:'center',marginBottom:32}}>
             <div style={{width:68,height:68,background:'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.08))',borderRadius:20,margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,boxShadow:'0 10px 28px rgba(30,41,59,0.35)'}}>🏢</div>
             <h1 style={{color:'#fff',fontSize:30,fontWeight:900,margin:0,letterSpacing:-0.4}}>AcmeCorp HRMS</h1>
-            <p style={{color:'rgba(255,255,255,0.75)',margin:'10px 0 0',fontSize:14}}>Human Resource Management System</p>
+            <p style={{color:'rgba(255,255,255,0.75)',margin:'10px 0 0',fontSize:14}}>Human Resource Management System (v2.0)</p>
           </div>
           <div style={{background:'rgba(255,255,255,0.09)',backdropFilter:'blur(22px)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:24,padding:34,boxShadow:'0 28px 50px rgba(2,6,23,0.45)'}}>
             <h2 style={{color:'#fff',margin:'0 0 24px',fontSize:20,fontWeight:700}}>Sign In</h2>
