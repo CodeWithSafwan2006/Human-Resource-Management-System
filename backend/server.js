@@ -18,6 +18,7 @@ app.use('/api/employees',  require('./routes/employees'));
 app.use('/api/leaves',     require('./routes/leaves'));
 app.use('/api/salary',     require('./routes/salary'));
 app.use('/api/ai',         require('./routes/ai'));
+app.use('/api/attendance', require('./routes/attendance'));
 
 // MongoDB connect
 mongoose.connect(process.env.MONGO_URI)

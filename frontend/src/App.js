@@ -28,20 +28,8 @@ const INITIAL_SALARY_STRUCTURES = {
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-const genAttendance = (empId) => {
-  const records = {};
-  [0,1,2].forEach(mOffset => {
-    const d = new Date(); d.setMonth(d.getMonth() - mOffset);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const working = mOffset === 0 ? Math.floor(Math.random()*5)+16 : Math.floor(Math.random()*3)+22;
-    records[key] = { workingDays: 26, present: working, absent: 26-working, late: Math.floor(Math.random()*3) };
-  });
-  return records;
-};
-
-const INITIAL_ATTENDANCE = Object.fromEntries(
-  INITIAL_EMPLOYEES.filter(e=>e.role==="employee").map(e=>[e.id, genAttendance(e.id)])
-);
+// Attendance is now fetched from the database
+const INITIAL_ATTENDANCE = {};
 
 const INITIAL_LEAVES = {
   "E001": { annual: 15, sick: 10, casual: 7, used_annual: 3, used_sick: 2, used_casual: 1 },
@@ -565,18 +553,36 @@ const EmployeeDashboard = ({user, employees, salaryStructures, attendance, leave
               </div>
               <div>
                 {!dailyPunches?.[user.id]?.[new Date().toISOString().split('T')[0]]?.punchIn ? (
-                  <Btn onClick={() => {
+                  <Btn onClick={async () => {
                     const today = new Date().toISOString().split('T')[0];
                     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    setDailyPunches(prev => ({...prev, [user.id]: {...(prev[user.id]||{}), [today]: {punchIn: time}}}));
+                    try {
+                      const res = await fetch(`${baseUrl}/api/attendance/punch-in`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ empId: user.id, date: today, time })
+                      });
+                      if (res.ok) {
+                        setDailyPunches(prev => ({...prev, [user.id]: {...(prev[user.id]||{}), [today]: {punchIn: time}}}));
+                      }
+                    } catch (err) { console.error("Punch in error:", err); }
                   }} color="primary" style={{background:'#10b981',borderColor:'#10b981'}}>⏱️ Punch In Now</Btn>
                 ) : !dailyPunches?.[user.id]?.[new Date().toISOString().split('T')[0]]?.punchOut ? (
                   <div style={{display:'flex',alignItems:'center',gap:12}}>
                     <div style={{fontSize:13,color:'#059669',fontWeight:600}}>Punched in at {dailyPunches[user.id][new Date().toISOString().split('T')[0]].punchIn}</div>
-                    <Btn onClick={() => {
+                    <Btn onClick={async () => {
                       const today = new Date().toISOString().split('T')[0];
                       const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                      setDailyPunches(prev => ({...prev, [user.id]: {...prev[user.id], [today]: {...prev[user.id][today], punchOut: time}}}));
+                      try {
+                        const res = await fetch(`${baseUrl}/api/attendance/punch-out`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ empId: user.id, date: today, time })
+                        });
+                        if (res.ok) {
+                          setDailyPunches(prev => ({...prev, [user.id]: {...prev[user.id], [today]: {...prev[user.id][today], punchOut: time}}}));
+                        }
+                      } catch (err) { console.error("Punch out error:", err); }
                     }} color="primary" style={{background:'#ef4444',borderColor:'#ef4444'}}>🛑 Punch Out</Btn>
                   </div>
                 ) : (
@@ -1204,14 +1210,46 @@ export default function HRMSApp() {
       .catch(err => console.error("Error fetching employees:", err));
   }, []);
   const [salaryStructures, setSalaryStructures] = useState(INITIAL_SALARY_STRUCTURES);
-  const [attendance] = useState(INITIAL_ATTENDANCE);
+  const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
+  const [dailyPunches, setDailyPunches] = useState({});
+
+  useEffect(() => {
+    if (currentUser) {
+      // Fetch punches from DB
+      const url = currentUser.role === 'employee' 
+        ? `${baseUrl}/api/attendance/${currentUser.id}`
+        : `${baseUrl}/api/attendance`;
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const punches = Array.isArray(data) ? data : [data];
+          const punchMap = {};
+          const attMap = {};
+
+          punches.forEach(p => {
+            if (!punchMap[p.empId]) punchMap[p.empId] = {};
+            punchMap[p.empId][p.date] = { punchIn: p.punchIn, punchOut: p.punchOut };
+
+            // Aggregate for monthly stats
+            const [y, m] = p.date.split('-');
+            const mk = `${y}-${m}`;
+            if (!attMap[p.empId]) attMap[p.empId] = {};
+            if (!attMap[p.empId][mk]) attMap[p.empId][mk] = { workingDays: 26, present: 0, absent: 26, late: 0 };
+            
+            attMap[p.empId][mk].present += 1;
+            attMap[p.empId][mk].absent -= 1;
+          });
+
+          setDailyPunches(punchMap);
+          setAttendance(attMap);
+        })
+        .catch(err => console.error("Error fetching attendance:", err));
+    }
+  }, [currentUser]);
+
   const [leaves, setLeaves] = useState(INITIAL_LEAVES);
   const [leaveRequests, setLeaveRequests] = useState(INITIAL_LEAVE_REQUESTS);
-  const [dailyPunches, setDailyPunches] = useState(() => {
-    const saved = localStorage.getItem('hrms_punches');
-    return saved ? JSON.parse(saved) : {};
-  });
-  useEffect(() => { localStorage.setItem('hrms_punches', JSON.stringify(dailyPunches)); }, [dailyPunches]);
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('hrms_user');
     return saved ? JSON.parse(saved) : null;
