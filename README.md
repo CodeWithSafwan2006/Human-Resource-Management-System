@@ -40,4 +40,4 @@ A professional, full-stack HRMS solution built with the MERN stack (MongoDB, Exp
 
 ## 📄 License
 ISC
----
+--
